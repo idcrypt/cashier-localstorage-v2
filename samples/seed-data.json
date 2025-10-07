@@ -1,0 +1,29 @@
+{
+  "catalog": [
+    { "id": "B001", "name": "Kopi Hitam", "price": 15000, "cost": 10000, "unit": "cup" },
+    { "id": "B002", "name": "Roti Coklat", "price": 12000, "cost": 7000, "unit": "pcs" },
+    { "id": "B003", "name": "Air Mineral", "price": 6000, "cost": 3000, "unit": "bottle" }
+  ],
+  "purchases": [
+    { "date": "2025-10-07", "item": "Kopi Hitam", "qty": 50, "unitCost": 10000, "total": 500000 },
+    { "date": "2025-10-07", "item": "Roti Coklat", "qty": 30, "unitCost": 7000, "total": 210000 }
+  ],
+  "sales": [
+    {
+      "date": "2025-10-07",
+      "customer": "Andi",
+      "items": [
+        { "name": "Kopi Hitam", "qty": 2, "price": 15000, "subtotal": 30000 },
+        { "name": "Roti Coklat", "qty": 1, "price": 12000, "subtotal": 12000 }
+      ],
+      "total": 42000
+    }
+  ],
+  "expenses": [
+    { "date": "2025-10-07", "desc": "Listrik Bulanan", "amount": 350000, "type": "routine" },
+    { "date": "2025-10-07", "desc": "Beli Kantong Plastik", "amount": 25000, "type": "oneoff" }
+  ],
+  "settings": {
+    "lang": "id"
+  }
+}
