@@ -16,13 +16,15 @@ let lastSale = null;
 
 const $ = (s) => document.querySelector(s);
 const fmt = (n) =>
-  currentLang === "id" ? "Rp " + Number(n).toLocaleString("id-ID") : "$" + Number(n).toLocaleString("en-US");
+  currentLang === "id"
+    ? "Rp " + Number(n).toLocaleString("id-ID")
+    : "$" + Number(n).toLocaleString("en-US");
 
 // === INIT ===
 window.addEventListener("DOMContentLoaded", async () => {
   await loadLanguage(currentLang);
 
-  // event listeners
+  // Event listeners
   $("#langSelect").addEventListener("change", async (e) => {
     currentLang = e.target.value;
     await loadLanguage(currentLang);
@@ -46,17 +48,18 @@ window.addEventListener("DOMContentLoaded", async () => {
 async function loadLanguage(code) {
   try {
     const res = await fetch(`lang/${code}.json`);
+    if (!res.ok) throw new Error("Language file not found");
     LANG = await res.json();
-    updateLangLabels();
   } catch (err) {
     console.warn("⚠️ Failed to load language file:", err);
     LANG = fallbackLang[code];
   }
+  updateLangLabels();
 }
 
 function updateLangLabels() {
-  document.querySelectorAll("[data-lang]").forEach((el) => {
-    const key = el.getAttribute("data-lang");
+  document.querySelectorAll("[id]").forEach((el) => {
+    const key = el.id;
     if (LANG[key]) el.textContent = LANG[key];
   });
 }
@@ -64,26 +67,26 @@ function updateLangLabels() {
 // === FALLBACK LANG ===
 const fallbackLang = {
   id: {
-    catalog: "Katalog Barang",
-    purchase: "Barang Masuk",
-    pos: "Kasir",
-    expense: "Pengeluaran",
-    total: "Total",
+    catalogTitle: "Katalog Barang",
+    purchaseTitle: "Barang Masuk",
+    posTitle: "Kasir",
+    todayTitle: "Transaksi Hari Ini",
+    expenseTitle: "Pengeluaran",
+    report: "Laporan Harian",
     profit: "Keuntungan",
     loss: "Kerugian",
-    report: "Laporan Harian",
     routine: "Rutin",
     oneoff: "Mendadak",
   },
   en: {
-    catalog: "Catalog",
-    purchase: "Incoming Goods",
-    pos: "Point of Sale",
-    expense: "Expenses",
-    total: "Total",
+    catalogTitle: "Catalog",
+    purchaseTitle: "Purchases",
+    posTitle: "Point of Sale",
+    todayTitle: "Transactions",
+    expenseTitle: "Expenses",
+    report: "Daily Report",
     profit: "Profit",
     loss: "Loss",
-    report: "Daily Report",
     routine: "Routine",
     oneoff: "One-off",
   },
@@ -115,19 +118,24 @@ function addOrUpdateItem(e) {
 
 function renderItems() {
   const list = $("#catalogList");
-  list.innerHTML = data.items
-    .map(
-      (i) => `
+  list.innerHTML =
+    data.items.length === 0
+      ? "<small>No items yet.</small>"
+      : data.items
+          .map(
+            (i) => `
       <div class="row">
         <div>${i.name} (${i.unit})</div>
         <small>Sell: ${fmt(i.price)} | Cost: ${fmt(i.cost)}</small>
       </div>`
-    )
-    .join("");
+          )
+          .join("");
 
   const selects = [$("#purchaseItem"), $("#selectItem")];
   selects.forEach((sel) => {
-    sel.innerHTML = data.items.map((i) => `<option value="${i.id}">${i.name}</option>`).join("");
+    sel.innerHTML = data.items
+      .map((i) => `<option value="${i.id}">${i.name}</option>`)
+      .join("");
   });
 }
 
@@ -155,9 +163,12 @@ function addPurchase() {
 }
 
 function renderPurchases() {
-  $("#purchaseList").innerHTML = data.purchases
-    .map((p) => `<div class="row"><div>${p.name} (${p.qty})</div><small>${fmt(p.total)}</small></div>`)
-    .join("");
+  $("#purchaseList").innerHTML =
+    data.purchases.length === 0
+      ? "<small>No purchases yet.</small>"
+      : data.purchases
+          .map((p) => `<div class="row"><div>${p.name} (${p.qty})</div><small>${fmt(p.total)}</small></div>`)
+          .join("");
 }
 
 // === POS CART ===
@@ -176,16 +187,19 @@ function addToCart() {
 
 function renderCart() {
   const wrap = $("#cart");
-  wrap.innerHTML = cart
-    .map(
-      (c, idx) => `
+  wrap.innerHTML =
+    cart.length === 0
+      ? "<small>Cart empty.</small>"
+      : cart
+          .map(
+            (c, idx) => `
       <div class="line">
         <span>${c.name} (${c.qty}x)</span>
         <strong>${fmt(c.price * c.qty)}</strong>
         <button onclick="removeCart(${idx})">x</button>
       </div>`
-    )
-    .join("");
+          )
+          .join("");
 }
 
 function removeCart(i) {
@@ -216,18 +230,21 @@ function completeSale() {
 }
 
 function renderSales() {
-  $("#transactionsList").innerHTML = data.sales
-    .slice()
-    .reverse()
-    .map(
-      (s) => `
+  $("#transactionsList").innerHTML =
+    data.sales.length === 0
+      ? "<small>No transactions.</small>"
+      : data.sales
+          .slice()
+          .reverse()
+          .map(
+            (s) => `
       <div class="row">
         <div>${new Date(s.date).toLocaleString()} - ${s.customer}</div>
         <small>${fmt(s.total)}</small>
         <button onclick="printReceipt(${s.id})">🧾</button>
       </div>`
-    )
-    .join("");
+          )
+          .join("");
 }
 
 // === RECEIPT ===
@@ -303,15 +320,18 @@ function addExpense() {
 }
 
 function renderExpenses() {
-  $("#expenseList").innerHTML = data.expenses
-    .map(
-      (e) => `
+  $("#expenseList").innerHTML =
+    data.expenses.length === 0
+      ? "<small>No expenses yet.</small>"
+      : data.expenses
+          .map(
+            (e) => `
       <div class="row">
         <div>${e.desc} (${LANG[e.type] || e.type})</div>
         <small>${fmt(e.amount)}</small>
       </div>`
-    )
-    .join("");
+          )
+          .join("");
 }
 
 // === REPORT PDF ===
