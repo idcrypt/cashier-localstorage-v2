@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Cashier App — LocalStorage v2</title>
+  <title data-lang="appTitle">Cashier App — LocalStorage v2</title>
   <link rel="stylesheet" href="style.css">
   <link rel="icon" type="image/png" href="assets/logo.png">
 
@@ -14,84 +14,85 @@
 <body>
   <div class="app">
     <header>
-      <h1 id="appTitle">Cashier</h1>
+      <h1 id="appTitle" data-lang="appTitle">Cashier</h1>
       <div class="controls">
         <select id="langSelect" title="Language">
           <option value="id">Bahasa</option>
           <option value="en">English</option>
         </select>
 
-        <label for="reportFrom" class="sr-only">From</label>
+        <label for="reportFrom" class="sr-only" data-lang="from">From</label>
         <input type="date" id="reportFrom" title="Report from" />
-        <label for="reportTo" class="sr-only">To</label>
+
+        <label for="reportTo" class="sr-only" data-lang="to">To</label>
         <input type="date" id="reportTo" title="Report to" />
 
-        <button id="downloadPdfBtn">PDF Report</button>
-        <button id="clearBtn">Clear Data</button>
+        <button id="downloadPdfBtn" data-lang="downloadReport">PDF Report</button>
+        <button id="clearBtn" data-lang="clearData">Clear Data</button>
       </div>
     </header>
 
     <main>
       <section class="panel left">
-        <h2 id="catalogTitle">Catalog</h2>
+        <h2 id="catalogTitle" data-lang="catalog">Catalog</h2>
 
         <form id="itemForm" class="card-form">
-          <input id="itemName" placeholder="Item name" required />
-          <input id="itemPrice" type="number" step="0.01" placeholder="Price (selling)" required />
-          <input id="itemCost" type="number" step="0.01" placeholder="Cost (purchase)" required />
-          <select id="itemUnit">
+          <input id="itemName" data-lang-placeholder="itemName" placeholder="Item name" required />
+          <input id="itemPrice" type="number" step="0.01" data-lang-placeholder="itemPrice" placeholder="Price (selling)" required />
+          <input id="itemCost" type="number" step="0.01" data-lang-placeholder="itemCost" placeholder="Cost (purchase)" required />
+          <select id="itemUnit" data-lang="itemUnit">
             <option value="pcs">pcs</option>
             <option value="kg">kg</option>
             <option value="unit">unit</option>
           </select>
-          <button type="submit">Add / Update</button>
+          <button type="submit" data-lang="addItem">Add / Update</button>
         </form>
 
         <div id="catalogList" class="list"></div>
         <hr/>
 
-        <h3 id="purchaseTitle">Purchases</h3>
+        <h3 id="purchaseTitle" data-lang="purchase">Purchases</h3>
         <form id="purchaseForm" class="card-form">
           <select id="purchaseItem"></select>
           <input id="purchaseQty" type="number" value="1" min="1" />
-          <input id="purchaseCost" type="number" step="0.01" placeholder="Unit cost" required />
-          <button id="addPurchaseBtn" type="button">Add Purchase</button>
+          <input id="purchaseCost" type="number" step="0.01" data-lang-placeholder="purchaseCost" placeholder="Unit cost" required />
+          <button id="addPurchaseBtn" type="button" data-lang="addPurchase">Add Purchase</button>
         </form>
 
         <div id="purchaseList" class="list"></div>
       </section>
 
       <section class="panel right">
-        <h2 id="posTitle">Point of Sale</h2>
+        <h2 id="posTitle" data-lang="pos">Point of Sale</h2>
         <div id="posArea">
           <select id="selectItem"></select>
           <input id="qty" type="number" value="1" min="1" />
-          <button id="addToCartBtn">Add to Cart</button>
+          <button id="addToCartBtn" data-lang="addToCart">Add to Cart</button>
 
           <div id="cart" class="cart"></div>
 
           <div class="pos-actions">
-            <input id="customerName" placeholder="Customer (optional)" />
-            <button id="completeSaleBtn">Complete Sale</button>
-            <button id="printLastReceiptBtn">Print Last Receipt</button>
-            <button id="pdfReceiptBtn">Save Receipt PDF</button>
+            <input id="customerName" data-lang-placeholder="customerName" placeholder="Customer (optional)" />
+            <button id="completeSaleBtn" data-lang="completeSale">Complete Sale</button>
+            <button id="printLastReceiptBtn" data-lang="printReceipt">Print Last Receipt</button>
+            <button id="pdfReceiptBtn" data-lang="saveReceipt">Save Receipt PDF</button>
           </div>
         </div>
 
-        <h3 id="todayTitle">Transactions</h3>
+        <h3 id="todayTitle" data-lang="transactions">Transactions</h3>
         <div id="transactionsList" class="list"></div>
 
         <hr/>
 
-        <h3 id="expenseTitle">Expenses</h3>
+        <h3 id="expenseTitle" data-lang="expense">Expenses</h3>
         <form id="expenseForm" class="card-form">
-          <input id="expenseDesc" placeholder="Description" required />
-          <input id="expenseAmount" type="number" step="0.01" placeholder="Amount" required />
+          <input id="expenseDesc" data-lang-placeholder="expenseDesc" placeholder="Description" required />
+          <input id="expenseAmount" type="number" step="0.01" data-lang-placeholder="amount" placeholder="Amount" required />
           <select id="expenseType">
-            <option value="routine">Routine</option>
-            <option value="oneoff">One-off</option>
+            <option value="routine" data-lang="routine">Routine</option>
+            <option value="oneoff" data-lang="oneoff">One-off</option>
           </select>
-          <button id="addExpenseBtn" type="button">Add Expense</button>
+          <button id="addExpenseBtn" type="button" data-lang="addExpense">Add Expense</button>
         </form>
 
         <div id="expenseList" class="list"></div>
@@ -99,7 +100,7 @@
     </main>
 
     <footer>
-      <small id="footerNote">LocalStorage Cashier — Dark Neon</small>
+      <small id="footerNote" data-lang="footerNote">LocalStorage Cashier — Dark Neon</small>
     </footer>
   </div>
 
