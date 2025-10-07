@@ -48,20 +48,27 @@ window.addEventListener("DOMContentLoaded", async () => {
 async function loadLanguage(code) {
   try {
     const res = await fetch(`lang/${code}.json`);
-    if (!res.ok) throw new Error("Language file not found");
     LANG = await res.json();
+    updateLangLabels();
   } catch (err) {
-    console.warn("⚠️ Failed to load language file:", err);
-    LANG = fallbackLang[code];
+    console.error("⚠️ Failed to load language file:", err);
   }
-  updateLangLabels();
 }
 
+// Update semua teks dan placeholder
 function updateLangLabels() {
-  document.querySelectorAll("[id]").forEach((el) => {
-    const key = el.id;
+  document.querySelectorAll("[data-lang]").forEach((el) => {
+    const key = el.getAttribute("data-lang");
     if (LANG[key]) el.textContent = LANG[key];
   });
+
+  document.querySelectorAll("[data-lang-placeholder]").forEach((el) => {
+    const key = el.getAttribute("data-lang-placeholder");
+    if (LANG[key]) el.placeholder = LANG[key];
+  });
+
+  // Update judul halaman juga
+  if (LANG["appTitle"]) document.title = LANG["appTitle"];
 }
 
 // === FALLBACK LANG ===
