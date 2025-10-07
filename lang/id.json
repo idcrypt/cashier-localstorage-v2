@@ -1,8 +1,27 @@
 {
-  "title": "Kasir LocalStorage",
-  "transaction-title": "Transaksi Penjualan",
-  "inventory-title": "Barang Masuk",
-  "expense-title": "Pengeluaran Toko",
-  "summary-title": "Ringkasan Kas",
-  "footer-text": "Semua data disimpan di browser Anda."
+  "catalog": "Katalog Barang",
+  "purchase": "Barang Masuk",
+  "pos": "Kasir",
+  "expense": "Pengeluaran",
+  "report": "Laporan Harian",
+  "total": "Total",
+  "profit": "Keuntungan",
+  "loss": "Kerugian",
+  "routine": "Rutin",
+  "oneoff": "Mendadak",
+
+  "itemName": "Nama Barang",
+  "itemPrice": "Harga Jual",
+  "itemCost": "Harga Modal",
+  "itemUnit": "Satuan",
+  "purchaseQty": "Jumlah Beli",
+  "purchaseCost": "Harga Beli",
+  "addItem": "Tambah Barang",
+  "addPurchase": "Tambah Barang Masuk",
+  "addExpense": "Tambah Pengeluaran",
+  "addToCart": "Masukkan ke Keranjang",
+  "completeSale": "Selesaikan Transaksi",
+  "printReceipt": "Cetak Struk",
+  "downloadReport": "Unduh Laporan",
+  "customerName": "Nama Pelanggan"
 }
