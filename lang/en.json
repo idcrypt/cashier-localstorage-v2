@@ -1,0 +1,8 @@
+{
+  "title": "LocalStorage Cashier",
+  "transaction-title": "Sales Transactions",
+  "inventory-title": "Incoming Stock",
+  "expense-title": "Store Expenses",
+  "summary-title": "Cash Summary",
+  "footer-text": "All data is stored in your browser."
+}
