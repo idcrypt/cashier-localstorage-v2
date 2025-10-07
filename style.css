@@ -1,0 +1,256 @@
+:root {
+  --bg: #07090f;
+  --card: #0f1622;
+  --neon: #19f3b0;
+  --accent: #8c4bff;
+  --border: rgba(255, 255, 255, 0.08);
+  --muted: #8a93a1;
+  --danger: #ff4b6e;
+  --text: #eafcf7;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: "Inter", Arial, sans-serif;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: radial-gradient(circle at top, #0c1220 0%, #050607 100%);
+  color: var(--text);
+  min-height: 100%;
+}
+
+.app {
+  max-width: 1200px;
+  margin: 20px auto;
+  padding: 16px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.4));
+  border-radius: 12px;
+  box-shadow: 0 0 22px rgba(0, 255, 204, 0.08);
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+header h1 {
+  font-size: 1.4rem;
+  color: var(--neon);
+  margin: 0;
+  letter-spacing: 1px;
+  text-shadow: 0 0 8px rgba(25, 243, 176, 0.5);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.controls select,
+.controls button,
+.controls input[type=date] {
+  background: var(--card);
+  color: var(--neon);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.controls button:hover {
+  background: var(--neon);
+  color: #001;
+}
+
+main {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.panel {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 14px;
+  box-shadow: 0 0 10px rgba(0,255,204,0.05);
+}
+
+.panel h2,
+.panel h3 {
+  color: var(--accent);
+  margin-top: 0;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.card-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.card-form input,
+.card-form select {
+  flex: 1;
+  min-width: 100px;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.03);
+  color: var(--text);
+}
+
+.card-form button {
+  background: linear-gradient(90deg, var(--neon), var(--accent));
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #001;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.card-form button:hover {
+  transform: scale(1.05);
+}
+
+.list {
+  margin-top: 12px;
+  border-top: 1px solid var(--border);
+  max-height: 260px;
+  overflow-y: auto;
+  padding-top: 4px;
+}
+
+.list .row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.list .row:hover {
+  background: rgba(255,255,255,0.02);
+}
+
+.list small {
+  color: var(--muted);
+}
+
+.list button {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--neon);
+  padding: 4px 8px;
+  margin-left: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.list button:hover {
+  background: var(--neon);
+  color: #001;
+}
+
+.cart {
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  margin-top: 10px;
+  background: rgba(255,255,255,0.02);
+  min-height: 80px;
+}
+
+.cart .line {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 4px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.pos-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.pos-actions input {
+  flex: 1;
+  background: rgba(255,255,255,0.03);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.pos-actions button {
+  flex: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: none;
+  background: var(--neon);
+  color: #001;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pos-actions button:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  margin: 16px 0;
+}
+
+footer {
+  text-align: center;
+  margin-top: 16px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--neon);
+}
+
+/* Print Styles (Receipt Mode) */
+@media print {
+  body * { visibility: hidden !important; }
+  #printableReceipt, #printableReceipt * {
+    visibility: visible !important;
+  }
+  #printableReceipt {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    background: #fff;
+    color: #000;
+    padding: 10px;
+  }
+}
