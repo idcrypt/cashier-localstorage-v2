@@ -1,8 +1,27 @@
 {
-  "title": "LocalStorage Cashier",
-  "transaction-title": "Sales Transactions",
-  "inventory-title": "Incoming Stock",
-  "expense-title": "Store Expenses",
-  "summary-title": "Cash Summary",
-  "footer-text": "All data is stored in your browser."
+  "catalog": "Catalog",
+  "purchase": "Incoming Goods",
+  "pos": "Point of Sale",
+  "expense": "Expenses",
+  "report": "Daily Report",
+  "total": "Total",
+  "profit": "Profit",
+  "loss": "Loss",
+  "routine": "Routine",
+  "oneoff": "One-off",
+
+  "itemName": "Item Name",
+  "itemPrice": "Sell Price",
+  "itemCost": "Cost Price",
+  "itemUnit": "Unit",
+  "purchaseQty": "Purchase Qty",
+  "purchaseCost": "Purchase Cost",
+  "addItem": "Add Item",
+  "addPurchase": "Add Incoming Goods",
+  "addExpense": "Add Expense",
+  "addToCart": "Add to Cart",
+  "completeSale": "Complete Sale",
+  "printReceipt": "Print Receipt",
+  "downloadReport": "Download Report",
+  "customerName": "Customer Name"
 }
