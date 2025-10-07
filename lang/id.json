@@ -1,4 +1,5 @@
 {
+  "appTitle": "Aplikasi Kasir",
   "catalog": "Katalog Barang",
   "purchase": "Barang Masuk",
   "pos": "Kasir",
@@ -22,6 +23,18 @@
   "addToCart": "Masukkan ke Keranjang",
   "completeSale": "Selesaikan Transaksi",
   "printReceipt": "Cetak Struk",
+  "saveReceipt": "Simpan Struk PDF",
   "downloadReport": "Unduh Laporan",
-  "customerName": "Nama Pelanggan"
+  "customerName": "Nama Pelanggan",
+  "transactions": "Transaksi",
+  "noTransactions": "Belum ada transaksi",
+  "noPurchases": "Belum ada pembelian",
+  "noExpenses": "Belum ada pengeluaran",
+  "noItem": "Belum ada barang",
+  "from": "Dari",
+  "to": "Sampai",
+  "clearData": "Hapus Semua Data",
+  "footerNote": "LocalStorage Kasir — Dark Neon",
+  "amount": "Jumlah",
+  "expenseDesc": "Deskripsi"
 }
