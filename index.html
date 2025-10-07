@@ -33,9 +33,9 @@
     </header>
 
     <main>
+      <!-- === Left Panel === -->
       <section class="panel left">
         <h2 id="catalogTitle" data-lang="catalog">Catalog</h2>
-
         <form id="itemForm" class="card-form">
           <input id="itemName" data-lang-placeholder="itemName" placeholder="Item name" required />
           <input id="itemPrice" type="number" step="0.01" data-lang-placeholder="itemPrice" placeholder="Price (selling)" required />
@@ -48,20 +48,21 @@
           <button type="submit" data-lang="addItem">Add / Update</button>
         </form>
 
-        <div id="catalogList" class="list"></div>
+        <div id="catalogList" class="list" data-lang-empty="noItemYet">No Item Yet</div>
         <hr/>
 
         <h3 id="purchaseTitle" data-lang="purchase">Purchases</h3>
         <form id="purchaseForm" class="card-form">
           <select id="purchaseItem"></select>
-          <input id="purchaseQty" type="number" value="1" min="1" />
+          <input id="purchaseQty" type="number" value="1" min="1" data-lang-placeholder="purchaseQty" placeholder="Quantity" />
           <input id="purchaseCost" type="number" step="0.01" data-lang-placeholder="purchaseCost" placeholder="Unit cost" required />
           <button id="addPurchaseBtn" type="button" data-lang="addPurchase">Add Purchase</button>
         </form>
 
-        <div id="purchaseList" class="list"></div>
+        <div id="purchaseList" class="list" data-lang-empty="noPurchasesYet">No Purchases Yet</div>
       </section>
 
+      <!-- === Right Panel === -->
       <section class="panel right">
         <h2 id="posTitle" data-lang="pos">Point of Sale</h2>
         <div id="posArea">
@@ -69,7 +70,7 @@
           <input id="qty" type="number" value="1" min="1" />
           <button id="addToCartBtn" data-lang="addToCart">Add to Cart</button>
 
-          <div id="cart" class="cart"></div>
+          <div id="cart" class="cart" data-lang-empty="cartEmpty">Cart is empty</div>
 
           <div class="pos-actions">
             <input id="customerName" data-lang-placeholder="customerName" placeholder="Customer (optional)" />
@@ -80,8 +81,7 @@
         </div>
 
         <h3 id="todayTitle" data-lang="transactions">Transactions</h3>
-        <div id="transactionsList" class="list"></div>
-
+        <div id="transactionsList" class="list" data-lang-empty="noTransactions">No Transactions</div>
         <hr/>
 
         <h3 id="expenseTitle" data-lang="expense">Expenses</h3>
@@ -95,7 +95,7 @@
           <button id="addExpenseBtn" type="button" data-lang="addExpense">Add Expense</button>
         </form>
 
-        <div id="expenseList" class="list"></div>
+        <div id="expenseList" class="list" data-lang-empty="noExpensesYet">No Expenses Yet</div>
       </section>
     </main>
 
