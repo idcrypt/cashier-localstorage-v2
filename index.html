@@ -102,6 +102,21 @@
       <small id="footerNote">LocalStorage Cashier — Dark Neon</small>
     </footer>
   </div>
+<script>
+  // Jika jsPDF gagal di-load dari CDN, ambil dari /lib/
+  window.addEventListener("error", function (e) {
+    if (e.target.tagName === "SCRIPT" && e.target.src.includes("jspdf")) {
+      console.warn("⚠️ jsPDF CDN gagal, menggunakan fallback lokal...");
+      const local1 = document.createElement("script");
+      local1.src = "lib/jspdf.umd.min.js";
+      document.head.appendChild(local1);
+
+      const local2 = document.createElement("script");
+      local2.src = "lib/jspdf.plugin.autotable.min.js";
+      document.head.appendChild(local2);
+    }
+  }, true);
+</script>
 
   <script src="app.js"></script>
 </body>
