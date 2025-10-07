@@ -1,18 +1,113 @@
-<!DOCTYPE html>
-<html lang="id">
+<!doctype html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Kasir LocalStorage v2</title>
-  <link rel="icon" type="image/png" href="assets/logo.png" />
-  <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.5.29/dist/jspdf.plugin.autotable.min.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Cashier App — LocalStorage v2</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/png" href="assets/logo.png">
+
+  <!-- jsPDF CDN + autotable (fallback: /lib/) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1 id="appTitle">Cashier</h1>
+      <div class="controls">
+        <select id="langSelect" title="Language">
+          <option value="id">Bahasa</option>
+          <option value="en">English</option>
+        </select>
+
+        <label for="reportFrom" class="sr-only">From</label>
+        <input type="date" id="reportFrom" title="Report from" />
+        <label for="reportTo" class="sr-only">To</label>
+        <input type="date" id="reportTo" title="Report to" />
+
+        <button id="downloadPdfBtn">PDF Report</button>
+        <button id="clearBtn">Clear Data</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="panel left">
+        <h2 id="catalogTitle">Catalog</h2>
+
+        <form id="itemForm" class="card-form">
+          <input id="itemName" placeholder="Item name" required />
+          <input id="itemPrice" type="number" step="0.01" placeholder="Price (selling)" required />
+          <input id="itemCost" type="number" step="0.01" placeholder="Cost (purchase)" required />
+          <select id="itemUnit">
+            <option value="pcs">pcs</option>
+            <option value="kg">kg</option>
+            <option value="unit">unit</option>
+          </select>
+          <button type="submit">Add / Update</button>
+        </form>
+
+        <div id="catalogList" class="list"></div>
+        <hr/>
+
+        <h3 id="purchaseTitle">Purchases</h3>
+        <form id="purchaseForm" class="card-form">
+          <select id="purchaseItem"></select>
+          <input id="purchaseQty" type="number" value="1" min="1" />
+          <input id="purchaseCost" type="number" step="0.01" placeholder="Unit cost" required />
+          <button id="addPurchaseBtn" type="button">Add Purchase</button>
+        </form>
+
+        <div id="purchaseList" class="list"></div>
+      </section>
+
+      <section class="panel right">
+        <h2 id="posTitle">Point of Sale</h2>
+        <div id="posArea">
+          <select id="selectItem"></select>
+          <input id="qty" type="number" value="1" min="1" />
+          <button id="addToCartBtn">Add to Cart</button>
+
+          <div id="cart" class="cart"></div>
+
+          <div class="pos-actions">
+            <input id="customerName" placeholder="Customer (optional)" />
+            <button id="completeSaleBtn">Complete Sale</button>
+            <button id="printLastReceiptBtn">Print Last Receipt</button>
+            <button id="pdfReceiptBtn">Save Receipt PDF</button>
+          </div>
+        </div>
+
+        <h3 id="todayTitle">Transactions</h3>
+        <div id="transactionsList" class="list"></div>
+
+        <hr/>
+
+        <h3 id="expenseTitle">Expenses</h3>
+        <form id="expenseForm" class="card-form">
+          <input id="expenseDesc" placeholder="Description" required />
+          <input id="expenseAmount" type="number" step="0.01" placeholder="Amount" required />
+          <select id="expenseType">
+            <option value="routine">Routine</option>
+            <option value="oneoff">One-off</option>
+          </select>
+          <button id="addExpenseBtn" type="button">Add Expense</button>
+        </form>
+
+        <div id="expenseList" class="list"></div>
+      </section>
+    </main>
+
+    <footer>
+      <small id="footerNote">LocalStorage Cashier — Dark Neon</small>
+    </footer>
+  </div>
+
+  <!-- CDN Fallback untuk jsPDF -->
   <script>
-    // Fallback jika jsPDF CDN gagal dimuat
     window.addEventListener("error", function (e) {
       if (e.target.tagName === "SCRIPT" && e.target.src.includes("jspdf")) {
-        console.warn("⚠️ jsPDF CDN gagal dimuat, menggunakan fallback lokal...");
+        console.warn("⚠️ jsPDF CDN gagal, menggunakan fallback lokal...");
         const local1 = document.createElement("script");
         local1.src = "lib/jspdf.umd.min.js";
         document.head.appendChild(local1);
@@ -23,107 +118,8 @@
       }
     }, true);
   </script>
-</head>
 
-<body>
-  <header>
-    <div class="logo">
-      <img src="assets/logo.png" alt="Logo" />
-      <h1 id="title">Kasir LocalStorage</h1>
-    </div>
-    <div class="controls">
-      <select id="langSelect">
-        <option value="id">🇮🇩 Indonesia</option>
-        <option value="en">🇬🇧 English</option>
-      </select>
-      <button id="exportPDF">📄 PDF Laporan</button>
-    </div>
-  </header>
-
-  <main>
-    <section id="transaction-section">
-      <h2 id="transaction-title">Transaksi Penjualan</h2>
-      <form id="salesForm">
-        <input type="text" id="itemName" placeholder="Nama Barang" required />
-        <input type="number" id="itemQty" placeholder="Qty" required min="1" />
-        <input type="number" id="itemPrice" placeholder="Harga Satuan" required min="0" />
-        <button type="submit" id="btnAddSale">Tambah</button>
-      </form>
-      <table id="salesTable">
-        <thead>
-          <tr>
-            <th id="th-item">Barang</th>
-            <th id="th-qty">Qty</th>
-            <th id="th-price">Harga</th>
-            <th id="th-total">Total</th>
-            <th id="th-action">Aksi</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </section>
-
-    <section id="inventory-section">
-      <h2 id="inventory-title">Barang Masuk</h2>
-      <form id="inventoryForm">
-        <input type="text" id="invName" placeholder="Nama Barang" required />
-        <input type="number" id="invQty" placeholder="Qty" required min="1" />
-        <input type="number" id="invCost" placeholder="Harga Modal" required min="0" />
-        <button type="submit" id="btnAddInventory">Tambah</button>
-      </form>
-      <table id="inventoryTable">
-        <thead>
-          <tr>
-            <th id="inv-item">Barang</th>
-            <th id="inv-qty">Qty</th>
-            <th id="inv-cost">Modal</th>
-            <th id="inv-total">Total</th>
-            <th id="inv-action">Aksi</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </section>
-
-    <section id="expense-section">
-      <h2 id="expense-title">Pengeluaran Toko</h2>
-      <form id="expenseForm">
-        <input type="text" id="expName" placeholder="Nama Pengeluaran" required />
-        <input type="number" id="expAmount" placeholder="Nominal" required min="0" />
-        <select id="expType">
-          <option value="rutin">Rutin</option>
-          <option value="mendadak">Mendadak</option>
-        </select>
-        <button type="submit" id="btnAddExpense">Tambah</button>
-      </form>
-      <table id="expenseTable">
-        <thead>
-          <tr>
-            <th id="exp-name">Nama</th>
-            <th id="exp-type">Tipe</th>
-            <th id="exp-amount">Nominal</th>
-            <th id="exp-action">Aksi</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </section>
-
-    <section id="summary-section">
-      <h2 id="summary-title">Ringkasan Kas</h2>
-      <div class="summary-grid">
-        <div><span id="sum-sales-label">Total Penjualan:</span> <strong id="sum-sales">0</strong></div>
-        <div><span id="sum-cost-label">Total Modal:</span> <strong id="sum-cost">0</strong></div>
-        <div><span id="sum-expense-label">Total Pengeluaran:</span> <strong id="sum-expense">0</strong></div>
-        <div><span id="sum-profit-label">Laba/Rugi:</span> <strong id="sum-profit">0</strong></div>
-      </div>
-    </section>
-  </main>
-
-  <footer>
-    <p>© 2025 Kasir LocalStorage v2 — <span id="footer-text">Semua data disimpan di browser Anda.</span></p>
-  </footer>
-
+  <!-- Multilingual JS -->
   <script src="app.js"></script>
 </body>
 </html>
