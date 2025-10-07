@@ -261,3 +261,15 @@ footer small {
     padding: 12px;
   }
 }
+
+.hidden {
+  display: none !important;
+}
+
+#receiptArea {
+  display: none;
+}
+
+#receiptArea.active {
+  display: block;
+}
