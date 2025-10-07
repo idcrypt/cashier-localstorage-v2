@@ -1,256 +1,214 @@
-:root {
-  --bg: #07090f;
-  --card: #0f1622;
-  --neon: #19f3b0;
-  --accent: #8c4bff;
-  --border: rgba(255, 255, 255, 0.08);
-  --muted: #8a93a1;
-  --danger: #ff4b6e;
-  --text: #eafcf7;
-}
-
+/* === Dark Neon Cashier Theme === */
 * {
   box-sizing: border-box;
-  font-family: "Inter", Arial, sans-serif;
-}
-
-html, body {
   margin: 0;
   padding: 0;
-  background: radial-gradient(circle at top, #0c1220 0%, #050607 100%);
-  color: var(--text);
-  min-height: 100%;
+}
+
+body {
+  font-family: 'Segoe UI', Roboto, sans-serif;
+  background: #0a0a0f;
+  color: #e4e4e4;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 20px;
 }
 
 .app {
-  max-width: 1200px;
-  margin: 20px auto;
+  width: 100%;
+  max-width: 1250px;
+  background: #101018;
+  border: 1px solid #1a1a2f;
+  box-shadow: 0 0 20px rgba(110, 0, 255, 0.25);
+  border-radius: 16px;
   padding: 16px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.4));
-  border-radius: 12px;
-  box-shadow: 0 0 22px rgba(0, 255, 204, 0.08);
 }
 
+/* === Header === */
 header {
   display: flex;
-  justify-content: space-between;
+  flex-wrap: wrap;
   align-items: center;
-  margin-bottom: 16px;
+  justify-content: space-between;
+  margin-bottom: 20px;
 }
 
-header h1 {
-  font-size: 1.4rem;
-  color: var(--neon);
-  margin: 0;
-  letter-spacing: 1px;
-  text-shadow: 0 0 8px rgba(25, 243, 176, 0.5);
+h1 {
+  font-size: 1.8rem;
+  color: #8e66ff;
+  text-shadow: 0 0 8px #5c26ff;
 }
 
 .controls {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
   align-items: center;
+  gap: 8px;
 }
 
-.controls select,
-.controls button,
-.controls input[type=date] {
-  background: var(--card);
-  color: var(--neon);
-  border: 1px solid var(--border);
-  border-radius: 8px;
+select,
+input[type="date"],
+input[type="number"],
+input[type="text"],
+input[type="search"],
+button {
+  background: #141423;
+  color: #eaeaea;
+  border: 1px solid #3d3d60;
+  border-radius: 6px;
   padding: 6px 10px;
   font-size: 0.9rem;
-  cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.controls button:hover {
-  background: var(--neon);
-  color: #001;
+select:focus,
+input:focus {
+  outline: none;
+  border-color: #8e66ff;
+  box-shadow: 0 0 6px #8e66ff;
 }
 
+button {
+  background: linear-gradient(90deg, #8e66ff, #5cc9ff);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
+  box-shadow: 0 0 10px rgba(142, 102, 255, 0.5);
+}
+
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 14px rgba(142, 102, 255, 0.8);
+}
+
+/* === Main Layout === */
 main {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  gap: 18px;
 }
 
 .panel {
-  background: var(--card);
+  background: #131320;
+  border: 1px solid #252540;
   border-radius: 12px;
   padding: 14px;
-  box-shadow: 0 0 10px rgba(0,255,204,0.05);
+  box-shadow: 0 0 12px rgba(92, 44, 255, 0.15);
 }
 
-.panel h2,
+.panel h2 {
+  font-size: 1.3rem;
+  margin-bottom: 10px;
+  color: #93a3ff;
+}
+
 .panel h3 {
-  color: var(--accent);
-  margin-top: 0;
-  font-weight: 600;
-  letter-spacing: 0.5px;
+  margin-top: 18px;
+  font-size: 1.05rem;
+  color: #9c7dff;
 }
 
+/* === Forms === */
 .card-form {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  margin-bottom: 12px;
 }
 
 .card-form input,
 .card-form select {
-  flex: 1;
-  min-width: 100px;
-  padding: 8px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: rgba(255,255,255,0.03);
-  color: var(--text);
+  flex: 1 1 130px;
 }
 
 .card-form button {
-  background: linear-gradient(90deg, var(--neon), var(--accent));
-  border: none;
-  border-radius: 8px;
-  padding: 8px 12px;
-  color: #001;
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform 0.15s ease;
+  flex: 0 0 auto;
+  background: linear-gradient(90deg, #9f7cff, #5ce1ff);
+  padding: 6px 12px;
 }
 
-.card-form button:hover {
-  transform: scale(1.05);
-}
-
+/* === Lists === */
 .list {
-  margin-top: 12px;
-  border-top: 1px solid var(--border);
-  max-height: 260px;
-  overflow-y: auto;
-  padding-top: 4px;
-}
-
-.list .row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-}
-
-.list .row:hover {
-  background: rgba(255,255,255,0.02);
-}
-
-.list small {
-  color: var(--muted);
-}
-
-.list button {
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  color: var(--neon);
-  padding: 4px 8px;
-  margin-left: 4px;
-  cursor: pointer;
-  font-size: 0.8rem;
-}
-
-.list button:hover {
-  background: var(--neon);
-  color: #001;
-}
-
-.cart {
-  border: 1px dashed var(--border);
+  background: #0f0f1a;
+  border: 1px solid #252550;
   border-radius: 8px;
   padding: 10px;
-  margin-top: 10px;
-  background: rgba(255,255,255,0.02);
-  min-height: 80px;
+  min-height: 60px;
+  margin-top: 6px;
+  overflow-y: auto;
+  max-height: 280px;
 }
 
-.cart .line {
+.list div {
   display: flex;
   justify-content: space-between;
-  padding: 6px 4px;
-  border-bottom: 1px solid rgba(255,255,255,0.04);
+  padding: 4px 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.list div:last-child {
+  border-bottom: none;
+}
+
+.list span {
+  font-size: 0.9rem;
+}
+
+/* === POS Area === */
+#cart {
+  background: #101020;
+  border: 1px solid #292950;
+  border-radius: 10px;
+  padding: 8px;
+  margin-top: 10px;
+  min-height: 80px;
+  box-shadow: inset 0 0 8px rgba(142, 102, 255, 0.25);
 }
 
 .pos-actions {
-  display: flex;
-  gap: 8px;
   margin-top: 10px;
+  display: flex;
   flex-wrap: wrap;
+  gap: 8px;
 }
 
-.pos-actions input {
-  flex: 1;
-  background: rgba(255,255,255,0.03);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px;
-}
-
-.pos-actions button {
-  flex: none;
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: none;
-  background: var(--neon);
-  color: #001;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.pos-actions button:hover {
-  background: var(--accent);
-  color: #fff;
-}
-
-hr {
-  border: none;
-  border-top: 1px solid rgba(255,255,255,0.05);
-  margin: 16px 0;
-}
-
+/* === Footer === */
 footer {
+  margin-top: 20px;
   text-align: center;
-  margin-top: 16px;
-  color: var(--muted);
   font-size: 0.85rem;
+  color: #777;
+  border-top: 1px solid #222;
+  padding-top: 10px;
 }
 
-/* Scrollbar */
+footer small {
+  color: #5c5cff;
+}
+
+/* === Scrollbar === */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--accent);
+  background: linear-gradient(#8e66ff, #5cc9ff);
   border-radius: 4px;
 }
-::-webkit-scrollbar-thumb:hover {
-  background: var(--neon);
+::-webkit-scrollbar-track {
+  background: #1a1a2a;
 }
 
-/* Print Styles (Receipt Mode) */
-@media print {
-  body * { visibility: hidden !important; }
-  #printableReceipt, #printableReceipt * {
-    visibility: visible !important;
+/* === Responsive === */
+@media (max-width: 900px) {
+  main {
+    grid-template-columns: 1fr;
   }
-  #printableReceipt {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    background: #fff;
-    color: #000;
-    padding: 10px;
+  header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
   }
 }
