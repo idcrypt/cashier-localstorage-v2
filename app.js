@@ -1,287 +1,373 @@
-// app.js — Kasir LocalStorage v2 by binka 2025
-// bilingual, offline, PDF report + receipt
+// app.js — Cashier App LocalStorage v2 (Bilingual Auto-Loader)
+// by binka 2025 — idcrypt.xyz edition
 
+let LANG = {};
 let currentLang = "id";
-let translations = {};
 
 let data = JSON.parse(localStorage.getItem("cashierDataV2")) || {
+  items: [],
+  purchases: [],
   sales: [],
-  inventory: [],
   expenses: [],
 };
 
-// Shortcut
-const $ = (sel) => document.querySelector(sel);
-const fmt = (n) => "Rp " + Number(n).toLocaleString("id-ID");
+let cart = [];
+let lastSale = null;
 
-// ======== INIT ========
-document.addEventListener("DOMContentLoaded", async () => {
+const $ = (s) => document.querySelector(s);
+const fmt = (n) =>
+  currentLang === "id" ? "Rp " + Number(n).toLocaleString("id-ID") : "$" + Number(n).toLocaleString("en-US");
+
+// === INIT ===
+window.addEventListener("DOMContentLoaded", async () => {
   await loadLanguage(currentLang);
-  renderAll();
 
+  // event listeners
   $("#langSelect").addEventListener("change", async (e) => {
     currentLang = e.target.value;
     await loadLanguage(currentLang);
-    renderText();
+    renderAll();
   });
 
-  $("#salesForm").addEventListener("submit", addSale);
-  $("#inventoryForm").addEventListener("submit", addInventory);
-  $("#expenseForm").addEventListener("submit", addExpense);
-  $("#exportPDF").addEventListener("click", exportReportPDF);
+  $("#itemForm").addEventListener("submit", addOrUpdateItem);
+  $("#addPurchaseBtn").addEventListener("click", addPurchase);
+  $("#addToCartBtn").addEventListener("click", addToCart);
+  $("#completeSaleBtn").addEventListener("click", completeSale);
+  $("#printLastReceiptBtn").addEventListener("click", printLastReceipt);
+  $("#pdfReceiptBtn").addEventListener("click", saveReceiptPDF);
+  $("#addExpenseBtn").addEventListener("click", addExpense);
+  $("#downloadPdfBtn").addEventListener("click", downloadReportPDF);
+  $("#clearBtn").addEventListener("click", clearData);
+
+  renderAll();
 });
 
-// ======== LANGUAGE LOADER ========
-async function loadLanguage(lang) {
+// === LANGUAGE LOADER ===
+async function loadLanguage(code) {
   try {
-    const res = await fetch(`lang/${lang}.json`);
-    translations = await res.json();
-    renderText();
+    const res = await fetch(`lang/${code}.json`);
+    LANG = await res.json();
+    updateLangLabels();
   } catch (err) {
-    console.error("Gagal memuat file bahasa:", err);
+    console.warn("⚠️ Failed to load language file:", err);
+    LANG = fallbackLang[code];
   }
 }
 
-function renderText() {
-  for (const key in translations) {
-    const el = document.getElementById(key);
-    if (el) el.textContent = translations[key];
-  }
+function updateLangLabels() {
+  document.querySelectorAll("[data-lang]").forEach((el) => {
+    const key = el.getAttribute("data-lang");
+    if (LANG[key]) el.textContent = LANG[key];
+  });
 }
 
-// ======== PENJUALAN ========
-function addSale(e) {
+// === FALLBACK LANG ===
+const fallbackLang = {
+  id: {
+    catalog: "Katalog Barang",
+    purchase: "Barang Masuk",
+    pos: "Kasir",
+    expense: "Pengeluaran",
+    total: "Total",
+    profit: "Keuntungan",
+    loss: "Kerugian",
+    report: "Laporan Harian",
+    routine: "Rutin",
+    oneoff: "Mendadak",
+  },
+  en: {
+    catalog: "Catalog",
+    purchase: "Incoming Goods",
+    pos: "Point of Sale",
+    expense: "Expenses",
+    total: "Total",
+    profit: "Profit",
+    loss: "Loss",
+    report: "Daily Report",
+    routine: "Routine",
+    oneoff: "One-off",
+  },
+};
+
+// === ITEM MANAGEMENT ===
+function addOrUpdateItem(e) {
   e.preventDefault();
   const name = $("#itemName").value.trim();
-  const qty = parseFloat($("#itemQty").value);
   const price = parseFloat($("#itemPrice").value);
-  if (!name || qty <= 0 || price <= 0) return alert("Data penjualan tidak valid.");
+  const cost = parseFloat($("#itemCost").value);
+  const unit = $("#itemUnit").value;
 
-  const sale = {
-    id: Date.now(),
-    name,
-    qty,
-    price,
-    total: qty * price,
-    date: new Date().toISOString(),
-  };
+  if (!name || price <= 0 || cost <= 0) return alert("Invalid item data.");
 
-  data.sales.push(sale);
+  const existing = data.items.find((i) => i.name.toLowerCase() === name.toLowerCase());
+  if (existing) {
+    existing.price = price;
+    existing.cost = cost;
+    existing.unit = unit;
+  } else {
+    data.items.push({ id: Date.now(), name, price, cost, unit });
+  }
+
   saveData();
-  renderSales();
-  $("#salesForm").reset();
-  printReceipt(sale);
+  renderItems();
+  $("#itemForm").reset();
 }
 
-function renderSales() {
-  const tbody = $("#salesTable tbody");
-  tbody.innerHTML = data.sales
+function renderItems() {
+  const list = $("#catalogList");
+  list.innerHTML = data.items
     .map(
-      (s, i) => `
-      <tr>
-        <td>${s.name}</td>
-        <td>${s.qty}</td>
-        <td>${fmt(s.price)}</td>
-        <td>${fmt(s.total)}</td>
-        <td><button onclick="printReceipt(${s.id})">🧾</button></td>
-      </tr>`
+      (i) => `
+      <div class="row">
+        <div>${i.name} (${i.unit})</div>
+        <small>Sell: ${fmt(i.price)} | Cost: ${fmt(i.cost)}</small>
+      </div>`
     )
     .join("");
-  renderSummary();
+
+  const selects = [$("#purchaseItem"), $("#selectItem")];
+  selects.forEach((sel) => {
+    sel.innerHTML = data.items.map((i) => `<option value="${i.id}">${i.name}</option>`).join("");
+  });
 }
 
-// ======== BARANG MASUK ========
-function addInventory(e) {
-  e.preventDefault();
-  const name = $("#invName").value.trim();
-  const qty = parseFloat($("#invQty").value);
-  const cost = parseFloat($("#invCost").value);
-  if (!name || qty <= 0 || cost <= 0) return alert("Data barang masuk tidak valid.");
+// === PURCHASES ===
+function addPurchase() {
+  const itemId = parseInt($("#purchaseItem").value);
+  const qty = parseFloat($("#purchaseQty").value);
+  const cost = parseFloat($("#purchaseCost").value);
+  const item = data.items.find((i) => i.id === itemId);
+  if (!item || qty <= 0 || cost <= 0) return alert("Invalid purchase data.");
 
-  const inv = {
+  data.purchases.push({
     id: Date.now(),
-    name,
+    itemId,
+    name: item.name,
     qty,
     cost,
     total: qty * cost,
     date: new Date().toISOString(),
-  };
+  });
 
-  data.inventory.push(inv);
   saveData();
-  renderInventory();
-  $("#inventoryForm").reset();
+  renderPurchases();
+  $("#purchaseForm").reset();
 }
 
-function renderInventory() {
-  const tbody = $("#inventoryTable tbody");
-  tbody.innerHTML = data.inventory
+function renderPurchases() {
+  $("#purchaseList").innerHTML = data.purchases
+    .map((p) => `<div class="row"><div>${p.name} (${p.qty})</div><small>${fmt(p.total)}</small></div>`)
+    .join("");
+}
+
+// === POS CART ===
+function addToCart() {
+  const id = parseInt($("#selectItem").value);
+  const qty = parseFloat($("#qty").value);
+  const item = data.items.find((i) => i.id === id);
+  if (!item || qty <= 0) return alert("Invalid item or quantity.");
+
+  const existing = cart.find((c) => c.id === id);
+  if (existing) existing.qty += qty;
+  else cart.push({ ...item, qty });
+
+  renderCart();
+}
+
+function renderCart() {
+  const wrap = $("#cart");
+  wrap.innerHTML = cart
     .map(
-      (i, idx) => `
-      <tr>
-        <td>${i.name}</td>
-        <td>${i.qty}</td>
-        <td>${fmt(i.cost)}</td>
-        <td>${fmt(i.total)}</td>
-        <td><button onclick="deleteInventory(${idx})">❌</button></td>
-      </tr>`
+      (c, idx) => `
+      <div class="line">
+        <span>${c.name} (${c.qty}x)</span>
+        <strong>${fmt(c.price * c.qty)}</strong>
+        <button onclick="removeCart(${idx})">x</button>
+      </div>`
     )
     .join("");
-  renderSummary();
 }
 
-function deleteInventory(idx) {
-  if (confirm("Hapus data barang masuk ini?")) {
-    data.inventory.splice(idx, 1);
-    saveData();
-    renderInventory();
-  }
+function removeCart(i) {
+  cart.splice(i, 1);
+  renderCart();
 }
 
-// ======== PENGELUARAN ========
-function addExpense(e) {
-  e.preventDefault();
-  const name = $("#expName").value.trim();
-  const amount = parseFloat($("#expAmount").value);
-  const type = $("#expType").value;
-  if (!name || amount <= 0) return alert("Data pengeluaran tidak valid.");
+// === SALES ===
+function completeSale() {
+  if (cart.length === 0) return alert("Cart is empty.");
+  const customer = $("#customerName").value.trim() || "-";
+  const total = cart.reduce((a, b) => a + b.price * b.qty, 0);
 
-  const exp = {
+  const sale = {
     id: Date.now(),
-    name,
+    date: new Date().toISOString(),
+    customer,
+    items: [...cart],
+    total,
+  };
+  data.sales.push(sale);
+  lastSale = sale;
+  cart = [];
+  saveData();
+  renderSales();
+  renderCart();
+  printReceipt(sale);
+}
+
+function renderSales() {
+  $("#transactionsList").innerHTML = data.sales
+    .slice()
+    .reverse()
+    .map(
+      (s) => `
+      <div class="row">
+        <div>${new Date(s.date).toLocaleString()} - ${s.customer}</div>
+        <small>${fmt(s.total)}</small>
+        <button onclick="printReceipt(${s.id})">🧾</button>
+      </div>`
+    )
+    .join("");
+}
+
+// === RECEIPT ===
+function printReceipt(idOrSale) {
+  const sale = typeof idOrSale === "object" ? idOrSale : data.sales.find((x) => x.id === idOrSale);
+  if (!sale) return;
+
+  const div = document.createElement("div");
+  div.id = "printableReceipt";
+  div.innerHTML = `
+    <div style="font-family:monospace;text-align:center;">
+      <h3>STRUK PENJUALAN</h3>
+      <p>${new Date(sale.date).toLocaleString()}</p>
+      <hr/>
+      ${sale.items
+        .map((i) => `<div>${i.name} (${i.qty}x${fmt(i.price)}) = ${fmt(i.price * i.qty)}</div>`)
+        .join("")}
+      <hr/>
+      <strong>Total: ${fmt(sale.total)}</strong>
+      <p>Terima kasih, ${sale.customer}</p>
+    </div>`;
+  document.body.appendChild(div);
+  window.print();
+  div.remove();
+}
+
+function printLastReceipt() {
+  if (!lastSale) return alert("No recent sale.");
+  printReceipt(lastSale);
+}
+
+function saveReceiptPDF() {
+  if (!lastSale) return alert("No recent sale.");
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y = 20;
+
+  doc.setFont("courier", "normal");
+  doc.text("STRUK PENJUALAN", 70, y);
+  y += 10;
+  doc.text(new Date(lastSale.date).toLocaleString(), 20, (y += 10));
+  doc.line(20, (y += 5), 190, y);
+  y += 10;
+
+  lastSale.items.forEach((i) => {
+    doc.text(`${i.name} (${i.qty}x${i.price})`, 20, y);
+    doc.text(fmt(i.qty * i.price), 150, y, { align: "right" });
+    y += 10;
+  });
+  doc.line(20, (y += 5), 190, y);
+  doc.text(`Total: ${fmt(lastSale.total)}`, 20, (y += 15));
+  doc.text(`Customer: ${lastSale.customer}`, 20, (y += 15));
+  doc.save("Receipt.pdf");
+}
+
+// === EXPENSES ===
+function addExpense() {
+  const desc = $("#expenseDesc").value.trim();
+  const amount = parseFloat($("#expenseAmount").value);
+  const type = $("#expenseType").value;
+  if (!desc || amount <= 0) return alert("Invalid expense.");
+
+  data.expenses.push({
+    id: Date.now(),
+    desc,
     amount,
     type,
     date: new Date().toISOString(),
-  };
-
-  data.expenses.push(exp);
+  });
   saveData();
   renderExpenses();
   $("#expenseForm").reset();
 }
 
 function renderExpenses() {
-  const tbody = $("#expenseTable tbody");
-  tbody.innerHTML = data.expenses
+  $("#expenseList").innerHTML = data.expenses
     .map(
-      (e, idx) => `
-      <tr>
-        <td>${e.name}</td>
-        <td>${e.type}</td>
-        <td>${fmt(e.amount)}</td>
-        <td><button onclick="deleteExpense(${idx})">❌</button></td>
-      </tr>`
+      (e) => `
+      <div class="row">
+        <div>${e.desc} (${LANG[e.type] || e.type})</div>
+        <small>${fmt(e.amount)}</small>
+      </div>`
     )
     .join("");
-  renderSummary();
 }
 
-function deleteExpense(idx) {
-  if (confirm("Hapus data pengeluaran ini?")) {
-    data.expenses.splice(idx, 1);
-    saveData();
-    renderExpenses();
+// === REPORT PDF ===
+function downloadReportPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF("p", "pt", "a4");
+  let y = 40;
+
+  const totalSales = sum(data.sales.map((s) => s.total));
+  const totalCost = sum(data.purchases.map((p) => p.total));
+  const totalExpenses = sum(data.expenses.map((e) => e.amount));
+  const profit = totalSales - totalCost - totalExpenses;
+
+  doc.setFont("courier", "normal");
+  doc.text(`${LANG.report || "Report"}`, 230, y);
+  y += 30;
+
+  doc.text(`Total Sales: ${fmt(totalSales)}`, 40, y);
+  doc.text(`Cost of Goods: ${fmt(totalCost)}`, 40, (y += 20));
+  doc.text(`Expenses: ${fmt(totalExpenses)}`, 40, (y += 20));
+  doc.text(`${profit >= 0 ? LANG.profit : LANG.loss}: ${fmt(profit)}`, 40, (y += 30));
+
+  doc.line(40, (y += 10), 500, y);
+  doc.text("Sales Summary:", 40, (y += 20));
+
+  data.sales.forEach((s) => {
+    doc.text(`${new Date(s.date).toLocaleDateString()} - ${fmt(s.total)}`, 60, (y += 14));
+    if (y > 760) {
+      doc.addPage();
+      y = 40;
+    }
+  });
+
+  doc.save("Daily-Report.pdf");
+}
+
+// === HELPERS ===
+function sum(arr) {
+  return arr.reduce((a, b) => a + (b || 0), 0);
+}
+
+function saveData() {
+  localStorage.setItem("cashierDataV2", JSON.stringify(data));
+  renderAll();
+}
+
+function clearData() {
+  if (confirm("Delete all data?")) {
+    localStorage.removeItem("cashierDataV2");
+    location.reload();
   }
 }
 
-// ======== STRUK PENJUALAN ========
-function printReceipt(idOrSale) {
-  const sale = typeof idOrSale === "object" ? idOrSale : data.sales.find((x) => x.id === idOrSale);
-  if (!sale) return;
-
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  doc.setFont("courier", "normal");
-
-  doc.text("STRUK PENJUALAN", 75, 20);
-  doc.text(new Date(sale.date).toLocaleString(), 20, 35);
-  doc.line(20, 40, 190, 40);
-
-  let y = 50;
-  sale.items
-    ? sale.items.forEach((i) => {
-        doc.text(`${i.name} (${i.qty}x${fmt(i.price)})`, 20, y);
-        doc.text(fmt(i.price * i.qty), 170, y, { align: "right" });
-        y += 10;
-      })
-    : doc.text(`${sale.name} (${sale.qty}x${fmt(sale.price)})`, 20, y);
-
-  y += 10;
-  doc.line(20, y, 190, y);
-  doc.text(`Total: ${fmt(sale.total)}`, 20, (y += 10));
-  doc.save(`Struk-${sale.name}.pdf`);
-}
-
-// ======== LAPORAN PDF ========
-function exportReportPDF() {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF("p", "pt", "a4");
-  let y = 50;
-
-  const totalSales = data.sales.reduce((a, b) => a + b.total, 0);
-  const totalCost = data.inventory.reduce((a, b) => a + b.total, 0);
-  const totalExpense = data.expenses.reduce((a, b) => a + b.amount, 0);
-  const profit = totalSales - totalCost - totalExpense;
-
-  doc.setFont("courier", "normal");
-  doc.text("LAPORAN HARIAN", 220, y);
-  y += 30;
-
-  doc.text(`Total Penjualan: ${fmt(totalSales)}`, 50, (y += 20));
-  doc.text(`Total Modal: ${fmt(totalCost)}`, 50, (y += 20));
-  doc.text(`Total Pengeluaran: ${fmt(totalExpense)}`, 50, (y += 20));
-  doc.text(`Laba/Rugi: ${fmt(profit)}`, 50, (y += 30));
-  doc.line(50, (y += 10), 500, y);
-
-  doc.autoTable({
-    head: [["Tanggal", "Kategori", "Keterangan", "Nominal"]],
-    body: [
-      ...data.sales.map((s) => [
-        new Date(s.date).toLocaleDateString(),
-        "Penjualan",
-        s.name,
-        fmt(s.total),
-      ]),
-      ...data.inventory.map((i) => [
-        new Date(i.date).toLocaleDateString(),
-        "Barang Masuk",
-        i.name,
-        fmt(i.total),
-      ]),
-      ...data.expenses.map((e) => [
-        new Date(e.date).toLocaleDateString(),
-        "Pengeluaran",
-        e.name,
-        fmt(e.amount),
-      ]),
-    ],
-    startY: y + 20,
-    styles: { fontSize: 9 },
-  });
-
-  doc.save("Laporan-Harian.pdf");
-}
-
-// ======== RENDER & SAVE ========
-function saveData() {
-  localStorage.setItem("cashierDataV2", JSON.stringify(data));
-}
-
-function renderSummary() {
-  const totalSales = data.sales.reduce((a, b) => a + b.total, 0);
-  const totalCost = data.inventory.reduce((a, b) => a + b.total, 0);
-  const totalExpense = data.expenses.reduce((a, b) => a + b.amount, 0);
-  const profit = totalSales - totalCost - totalExpense;
-
-  $("#sum-sales").textContent = fmt(totalSales);
-  $("#sum-cost").textContent = fmt(totalCost);
-  $("#sum-expense").textContent = fmt(totalExpense);
-  $("#sum-profit").textContent = fmt(profit);
-}
-
 function renderAll() {
+  renderItems();
+  renderPurchases();
   renderSales();
-  renderInventory();
   renderExpenses();
-  renderSummary();
 }
