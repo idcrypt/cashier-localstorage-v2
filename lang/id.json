@@ -1,0 +1,8 @@
+{
+  "title": "Kasir LocalStorage",
+  "transaction-title": "Transaksi Penjualan",
+  "inventory-title": "Barang Masuk",
+  "expense-title": "Pengeluaran Toko",
+  "summary-title": "Ringkasan Kas",
+  "footer-text": "Semua data disimpan di browser Anda."
+}
