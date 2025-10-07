@@ -211,6 +211,7 @@ function completeSale() {
   renderCart();
 }
 
+// === RENDER SALES LIST ===
 function renderSales() {
   $("#transactionsList").innerHTML =
     data.sales.length === 0
@@ -221,40 +222,69 @@ function renderSales() {
           .map(
             (s) => `
       <div class="row">
-        <div>${new Date(s.date).toLocaleString()} - ${s.customer}</div>
+        <div>${new Date(s.date).toLocaleString()} - ${s.customer || "-"}</div>
         <small>${fmt(s.total)}</small>
-        <button onclick="printReceipt(${s.id})">🧾</button>
+        <button onclick="printReceipt(${s.id})" title="${LANG.printReceipt || 'Cetak Struk'}">🧾</button>
       </div>`
           )
           .join("");
 }
 
-// === RECEIPT ===
+// === RECEIPT PRINTING ===
 function printReceipt(idOrSale) {
   const sale = typeof idOrSale === "object" ? idOrSale : data.sales.find((x) => x.id === idOrSale);
   if (!sale) return;
 
-  const div = document.createElement("div");
-  div.id = "printableReceipt";
-  div.style.position = "absolute";
-  div.style.left = "-9999px";
-  div.innerHTML = `
-    <div style="font-family:monospace;text-align:center;">
+  const receiptHTML = `
+    <div style="font-family: monospace; text-align: center;">
       <h3>${LANG.printReceipt || "STRUK PENJUALAN"}</h3>
       <p>${new Date(sale.date).toLocaleString()}</p>
       <hr/>
-      ${sale.items.map((i) => `<div>${i.name} (${i.qty} x ${fmt(i.price)}) = ${fmt(i.price * i.qty)}</div>`).join("")}
+      ${sale.items
+        .map(
+          (i) =>
+            `<div>${i.name} (${i.qty} x ${fmt(i.price)}) = ${fmt(i.price * i.qty)}</div>`
+        )
+        .join("")}
       <hr/>
       <strong>${LANG.total || "Total"}: ${fmt(sale.total)}</strong>
-      <p>${LANG.customerName || "Customer"}: ${sale.customer}</p>
-    </div>`;
-  document.body.appendChild(div);
-  window.print();
-  div.remove();
+      <p>${LANG.customerName || "Pelanggan"}: ${sale.customer || "-"}</p>
+      <p style="font-size: 12px; margin-top: 10px;">${LANG.footerNote || "LocalStorage Kasir — Dark Neon"}</p>
+    </div>
+  `;
+
+  // Buka jendela baru hanya untuk struk
+  const printWindow = window.open("", "_blank", "width=400,height=600");
+  printWindow.document.open();
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>${LANG.printReceipt || "Struk Penjualan"}</title>
+        <style>
+          body { font-family: monospace; padding: 10px; }
+          h3 { margin-bottom: 5px; }
+          hr { border: none; border-top: 1px dashed #333; margin: 6px 0; }
+          strong { display: block; margin-top: 6px; }
+          div { font-size: 14px; }
+          @media print {
+            body { margin: 0; }
+          }
+        </style>
+      </head>
+      <body onload="window.print(); window.close();">
+        ${receiptHTML}
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
 }
 
+// === PRINT LAST RECEIPT BUTTON ===
 function printLastReceipt() {
-  if (!lastSale) return alert(LANG.noRecentSale || "No recent sale.");
+  if (!lastSale) {
+    alert(LANG.noRecentSale || "Tidak ada transaksi terakhir.");
+    return;
+  }
   printReceipt(lastSale);
 }
 
