@@ -1,279 +1,354 @@
-// app.js — Cashier App with LocalStorage + PDF Reports
-// v1.0 — Dark Neon Dual Language
+// app.js — Cashier App LocalStorage v2
+// by binka 2025 — bilingual, pdf report, print receipt
 
 const LANG = {
   id: {
-    sales: "Penjualan",
-    expenses: "Pengeluaran",
-    incoming: "Barang Masuk",
-    add: "Tambah",
-    product: "Nama Barang",
-    qty: "Qty",
-    price: "Harga",
+    catalog: "Katalog Barang",
+    purchase: "Barang Masuk",
+    pos: "Kasir",
+    expense: "Pengeluaran",
     total: "Total",
-    sell: "Jual",
-    buyer: "Nama Pembeli",
-    report: "Laporan Harian",
     profit: "Keuntungan",
     loss: "Kerugian",
-    exportPDF: "Ekspor PDF",
-    printReceipt: "Cetak Struk",
-    expenseType: "Jenis Pengeluaran",
-    expenseAmount: "Jumlah",
-    expenseAdd: "Tambah Pengeluaran",
+    report: "Laporan Harian",
+    routine: "Rutin",
+    oneoff: "Mendadak",
   },
   en: {
-    sales: "Sales",
-    expenses: "Expenses",
-    incoming: "Incoming Goods",
-    add: "Add",
-    product: "Product",
-    qty: "Qty",
-    price: "Price",
+    catalog: "Catalog",
+    purchase: "Incoming Goods",
+    pos: "Point of Sale",
+    expense: "Expenses",
     total: "Total",
-    sell: "Sell",
-    buyer: "Customer Name",
-    report: "Daily Report",
     profit: "Profit",
     loss: "Loss",
-    exportPDF: "Export PDF",
-    printReceipt: "Print Receipt",
-    expenseType: "Expense Type",
-    expenseAmount: "Amount",
-    expenseAdd: "Add Expense",
+    report: "Daily Report",
+    routine: "Routine",
+    oneoff: "One-off",
   },
 };
 
 let lang = "id";
-let data = JSON.parse(localStorage.getItem("cashierData")) || {
+let data = JSON.parse(localStorage.getItem("cashierDataV2")) || {
+  items: [],
+  purchases: [],
   sales: [],
-  incoming: [],
   expenses: [],
 };
 
-const t = (key) => LANG[lang][key] || key;
+let cart = [];
+let lastSale = null;
 
-const el = (sel) => document.querySelector(sel);
-const els = (sel) => document.querySelectorAll(sel);
+// ===== Utility Shortcuts =====
+const $ = (s) => document.querySelector(s);
+const fmt = (n) => "Rp " + Number(n).toLocaleString("id-ID");
 
-// ============ INIT ============
+// ===== Init =====
 window.addEventListener("DOMContentLoaded", () => {
-  el("#langSelect").addEventListener("change", (e) => {
+  $("#langSelect").addEventListener("change", (e) => {
     lang = e.target.value;
     renderAll();
   });
-  el("#addSale").addEventListener("click", addSale);
-  el("#addIncoming").addEventListener("click", addIncoming);
-  el("#addExpense").addEventListener("click", addExpense);
-  el("#exportPDF").addEventListener("click", exportPDF);
+  $("#itemForm").addEventListener("submit", addOrUpdateItem);
+  $("#addPurchaseBtn").addEventListener("click", addPurchase);
+  $("#addToCartBtn").addEventListener("click", addToCart);
+  $("#completeSaleBtn").addEventListener("click", completeSale);
+  $("#printLastReceiptBtn").addEventListener("click", printLastReceipt);
+  $("#pdfReceiptBtn").addEventListener("click", saveReceiptPDF);
+  $("#addExpenseBtn").addEventListener("click", addExpense);
+  $("#downloadPdfBtn").addEventListener("click", downloadReportPDF);
+  $("#clearBtn").addEventListener("click", clearData);
 
   renderAll();
 });
 
-// ============ CORE FUNCTIONS ============
+// ===== Item Management =====
+function addOrUpdateItem(e) {
+  e.preventDefault();
+  const name = $("#itemName").value.trim();
+  const price = parseFloat($("#itemPrice").value);
+  const cost = parseFloat($("#itemCost").value);
+  const unit = $("#itemUnit").value;
 
-function addSale() {
-  const product = el("#saleProduct").value.trim();
-  const qty = parseFloat(el("#saleQty").value);
-  const price = parseFloat(el("#salePrice").value);
-  const buyer = el("#saleBuyer").value.trim() || "-";
-  if (!product || qty <= 0 || price <= 0) return alert("Data tidak valid");
+  if (!name || price <= 0 || cost <= 0) return alert("Invalid item data.");
 
-  const total = qty * price;
-  const sale = {
-    id: Date.now(),
-    product,
-    qty,
-    price,
-    total,
-    buyer,
-    date: new Date().toISOString(),
-  };
-  data.sales.push(sale);
+  const existing = data.items.find((i) => i.name.toLowerCase() === name.toLowerCase());
+  if (existing) {
+    existing.price = price;
+    existing.cost = cost;
+    existing.unit = unit;
+  } else {
+    data.items.push({ id: Date.now(), name, price, cost, unit });
+  }
+
   saveData();
-  renderSales();
-  printReceipt(sale);
+  renderItems();
+  $("#itemForm").reset();
 }
 
-function addIncoming() {
-  const product = el("#inProduct").value.trim();
-  const qty = parseFloat(el("#inQty").value);
-  const cost = parseFloat(el("#inCost").value);
-  if (!product || qty <= 0 || cost <= 0) return alert("Data tidak valid");
+function renderItems() {
+  const list = $("#catalogList");
+  list.innerHTML = data.items
+    .map(
+      (i) => `
+      <div class="row">
+        <div>${i.name} (${i.unit})</div>
+        <small>Sell: ${fmt(i.price)} | Cost: ${fmt(i.cost)}</small>
+      </div>`
+    )
+    .join("");
 
-  data.incoming.push({
+  // refresh dropdowns
+  const selects = [$("#purchaseItem"), $("#selectItem")];
+  selects.forEach((sel) => {
+    sel.innerHTML = data.items
+      .map((i) => `<option value="${i.id}">${i.name}</option>`)
+      .join("");
+  });
+}
+
+// ===== Purchases (Barang Masuk) =====
+function addPurchase() {
+  const itemId = parseInt($("#purchaseItem").value);
+  const qty = parseFloat($("#purchaseQty").value);
+  const cost = parseFloat($("#purchaseCost").value);
+  const item = data.items.find((i) => i.id === itemId);
+  if (!item || qty <= 0 || cost <= 0) return alert("Invalid purchase data.");
+
+  data.purchases.push({
     id: Date.now(),
-    product,
+    itemId,
+    name: item.name,
     qty,
     cost,
     total: qty * cost,
     date: new Date().toISOString(),
   });
+
   saveData();
-  renderIncoming();
+  renderPurchases();
+  $("#purchaseForm").reset();
 }
 
+function renderPurchases() {
+  $("#purchaseList").innerHTML = data.purchases
+    .map((p) => `<div class="row"><div>${p.name} (${p.qty})</div><small>${fmt(p.total)}</small></div>`)
+    .join("");
+}
+
+// ===== POS Cart =====
+function addToCart() {
+  const id = parseInt($("#selectItem").value);
+  const qty = parseFloat($("#qty").value);
+  const item = data.items.find((i) => i.id === id);
+  if (!item || qty <= 0) return alert("Invalid item or quantity.");
+
+  const existing = cart.find((c) => c.id === id);
+  if (existing) existing.qty += qty;
+  else cart.push({ ...item, qty });
+
+  renderCart();
+}
+
+function renderCart() {
+  const wrap = $("#cart");
+  wrap.innerHTML = cart
+    .map(
+      (c, idx) => `
+      <div class="line">
+        <span>${c.name} (${c.qty}x)</span>
+        <strong>${fmt(c.price * c.qty)}</strong>
+        <button onclick="removeCart(${idx})">x</button>
+      </div>`
+    )
+    .join("");
+}
+
+function removeCart(i) {
+  cart.splice(i, 1);
+  renderCart();
+}
+
+// ===== Complete Sale =====
+function completeSale() {
+  if (cart.length === 0) return alert("Cart is empty.");
+  const customer = $("#customerName").value.trim() || "-";
+  const total = cart.reduce((a, b) => a + b.price * b.qty, 0);
+
+  const sale = {
+    id: Date.now(),
+    date: new Date().toISOString(),
+    customer,
+    items: [...cart],
+    total,
+  };
+  data.sales.push(sale);
+  lastSale = sale;
+  cart = [];
+  saveData();
+  renderSales();
+  renderCart();
+  printReceipt(sale);
+}
+
+function renderSales() {
+  $("#transactionsList").innerHTML = data.sales
+    .slice()
+    .reverse()
+    .map(
+      (s) => `
+      <div class="row">
+        <div>${new Date(s.date).toLocaleString()} - ${s.customer}</div>
+        <small>${fmt(s.total)}</small>
+        <button onclick="printReceipt(${s.id})">Print</button>
+      </div>`
+    )
+    .join("");
+}
+
+// ===== Receipt =====
+function printReceipt(idOrSale) {
+  const sale = typeof idOrSale === "object" ? idOrSale : data.sales.find((x) => x.id === idOrSale);
+  if (!sale) return;
+
+  const div = document.createElement("div");
+  div.id = "printableReceipt";
+  div.innerHTML = `
+    <div style="font-family:monospace;text-align:center;">
+      <h3>STRUK PENJUALAN</h3>
+      <p>${new Date(sale.date).toLocaleString()}</p>
+      <hr/>
+      ${sale.items
+        .map((i) => `<div>${i.name} (${i.qty}x${fmt(i.price)}) = ${fmt(i.price * i.qty)}</div>`)
+        .join("")}
+      <hr/>
+      <strong>Total: ${fmt(sale.total)}</strong>
+      <p>Terima kasih, ${sale.customer}</p>
+    </div>`;
+  document.body.appendChild(div);
+  window.print();
+  div.remove();
+}
+
+function printLastReceipt() {
+  if (!lastSale) return alert("No recent sale.");
+  printReceipt(lastSale);
+}
+
+function saveReceiptPDF() {
+  if (!lastSale) return alert("No recent sale.");
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y = 20;
+
+  doc.setFont("courier", "normal");
+  doc.text("STRUK PENJUALAN", 70, y);
+  y += 10;
+  doc.text(new Date(lastSale.date).toLocaleString(), 20, (y += 10));
+  doc.line(20, (y += 5), 190, y);
+  y += 10;
+
+  lastSale.items.forEach((i) => {
+    doc.text(`${i.name} (${i.qty}x${i.price})`, 20, y);
+    doc.text(fmt(i.qty * i.price), 150, y, { align: "right" });
+    y += 10;
+  });
+  doc.line(20, (y += 5), 190, y);
+  doc.text(`Total: ${fmt(lastSale.total)}`, 20, (y += 15));
+  doc.text(`Customer: ${lastSale.customer}`, 20, (y += 15));
+  doc.save("Receipt.pdf");
+}
+
+// ===== Expenses =====
 function addExpense() {
-  const type = el("#exType").value.trim();
-  const amount = parseFloat(el("#exAmount").value);
-  if (!type || amount <= 0) return alert("Data tidak valid");
+  const desc = $("#expenseDesc").value.trim();
+  const amount = parseFloat($("#expenseAmount").value);
+  const type = $("#expenseType").value;
+  if (!desc || amount <= 0) return alert("Invalid expense.");
 
   data.expenses.push({
     id: Date.now(),
-    type,
+    desc,
     amount,
+    type,
     date: new Date().toISOString(),
   });
   saveData();
   renderExpenses();
-}
-
-function saveData() {
-  localStorage.setItem("cashierData", JSON.stringify(data));
-  renderAll();
-}
-
-// ============ RENDER ============
-
-function renderAll() {
-  renderSales();
-  renderIncoming();
-  renderExpenses();
-}
-
-function renderSales() {
-  const wrap = el("#salesList");
-  wrap.innerHTML = data.sales
-    .map(
-      (s) => `
-      <div class="row">
-        <div>${s.product} (${s.qty} x ${fmt(s.price)})</div>
-        <small>${fmt(s.total)}</small>
-        <button onclick="printReceipt(${s.id})">${t("printReceipt")}</button>
-      </div>`
-    )
-    .join("");
-}
-
-function renderIncoming() {
-  const wrap = el("#incomingList");
-  wrap.innerHTML = data.incoming
-    .map(
-      (i) => `
-      <div class="row">
-        <div>${i.product} (${i.qty} x ${fmt(i.cost)})</div>
-        <small>${fmt(i.total)}</small>
-      </div>`
-    )
-    .join("");
+  $("#expenseForm").reset();
 }
 
 function renderExpenses() {
-  const wrap = el("#expensesList");
-  wrap.innerHTML = data.expenses
+  $("#expenseList").innerHTML = data.expenses
     .map(
       (e) => `
       <div class="row">
-        <div>${e.type}</div>
+        <div>${e.desc} (${LANG[lang][e.type] || e.type})</div>
         <small>${fmt(e.amount)}</small>
       </div>`
     )
     .join("");
 }
 
-// ============ UTILS ============
-
-function fmt(n) {
-  return "Rp" + n.toLocaleString("id-ID");
-}
-
-// ============ RECEIPT PRINTING ============
-
-function printReceipt(idOrObj) {
-  const s =
-    typeof idOrObj === "object"
-      ? idOrObj
-      : data.sales.find((x) => x.id === idOrObj);
-  if (!s) return alert("Data tidak ditemukan");
-
-  const div = document.createElement("div");
-  div.id = "printableReceipt";
-  div.innerHTML = `
-    <div style="text-align:center;font-family:monospace;">
-      <h3>STRUK PEMBELIAN</h3>
-      <hr/>
-      <p>${new Date(s.date).toLocaleString()}</p>
-      <p>${s.product}</p>
-      <p>${s.qty} x ${fmt(s.price)}</p>
-      <p>Total: <strong>${fmt(s.total)}</strong></p>
-      <hr/>
-      <p>Terima kasih ${s.buyer}</p>
-    </div>
-  `;
-  document.body.appendChild(div);
-  window.print();
-  div.remove();
-}
-
-// ============ REPORT PDF ============
-
-function exportPDF() {
+// ===== Report PDF =====
+function downloadReportPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF("p", "pt", "a4");
   let y = 40;
 
+  const totalSales = sum(data.sales.map((s) => s.total));
+  const totalCost = sum(data.purchases.map((p) => p.total));
+  const totalExpenses = sum(data.expenses.map((e) => e.amount));
+  const profit = totalSales - totalCost - totalExpenses;
+
   doc.setFont("courier", "normal");
-  doc.text("LAPORAN HARIAN TOKO", 200, y);
-  y += 20;
+  doc.text(`${LANG[lang].report}`, 230, y);
+  y += 30;
 
-  const totalSales = sum(data.sales.map((x) => x.total));
-  const totalIncoming = sum(data.incoming.map((x) => x.total));
-  const totalExpense = sum(data.expenses.map((x) => x.amount));
-  const profit = totalSales - totalIncoming - totalExpense;
-
-  doc.text(`Total Penjualan: ${fmt(totalSales)}`, 40, (y += 20));
-  doc.text(`Modal Barang Masuk: ${fmt(totalIncoming)}`, 40, (y += 20));
-  doc.text(`Pengeluaran: ${fmt(totalExpense)}`, 40, (y += 20));
+  doc.text(`Total Sales: ${fmt(totalSales)}`, 40, y);
+  doc.text(`Cost of Goods: ${fmt(totalCost)}`, 40, (y += 20));
+  doc.text(`Expenses: ${fmt(totalExpenses)}`, 40, (y += 20));
   doc.text(
-    `${profit >= 0 ? t("profit") : t("loss")}: ${fmt(profit)}`,
+    `${profit >= 0 ? LANG[lang].profit : LANG[lang].loss}: ${fmt(profit)}`,
     40,
     (y += 30)
   );
 
-  doc.text("RINCIAN PENJUALAN:", 40, (y += 30));
-  y = drawTable(doc, ["Barang", "Qty", "Harga", "Total"], data.sales, y, [
-    "product",
-    "qty",
-    "price",
-    "total",
-  ]);
+  doc.line(40, (y += 10), 500, y);
+  doc.text("Sales Summary:", 40, (y += 20));
 
-  y += 20;
-  doc.text("RINCIAN PENGELUARAN:", 40, (y += 20));
-  y = drawTable(doc, ["Jenis", "Jumlah"], data.expenses, y, ["type", "amount"]);
-
-  doc.save("Laporan-Harian.pdf");
-}
-
-function drawTable(doc, headers, arr, y, keys) {
-  if (!arr.length) {
-    doc.text("- Tidak ada data -", 60, (y += 16));
-    return y;
-  }
-  doc.setFontSize(9);
-  y += 10;
-  doc.text(headers.join(" | "), 40, y);
-  y += 10;
-  arr.forEach((r) => {
-    const line = keys
-      .map((k) => (r[k] !== undefined ? String(r[k]) : ""))
-      .join(" | ");
-    doc.text(line, 40, y);
-    y += 14;
+  data.sales.forEach((s) => {
+    doc.text(`${new Date(s.date).toLocaleDateString()} - ${fmt(s.total)}`, 60, (y += 14));
+    if (y > 760) {
+      doc.addPage();
+      y = 40;
+    }
   });
-  return y;
+
+  doc.save("Daily-Report.pdf");
 }
 
+// ===== Helpers =====
 function sum(arr) {
   return arr.reduce((a, b) => a + (b || 0), 0);
+}
+
+function saveData() {
+  localStorage.setItem("cashierDataV2", JSON.stringify(data));
+  renderAll();
+}
+
+function clearData() {
+  if (confirm("Delete all data?")) {
+    localStorage.removeItem("cashierDataV2");
+    location.reload();
+  }
+}
+
+// ===== Render All =====
+function renderAll() {
+  renderItems();
+  renderPurchases();
+  renderSales();
+  renderExpenses();
 }
