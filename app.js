@@ -1,4 +1,4 @@
-// app.js — Cashier App LocalStorage v2 (Bilingual Auto-Loader)
+// app.js — Cashier App LocalStorage v2 (Bilingual Ready)
 // by binka 2025 — idcrypt.xyz edition
 
 let LANG = {};
@@ -24,7 +24,6 @@ const fmt = (n) =>
 window.addEventListener("DOMContentLoaded", async () => {
   await loadLanguage(currentLang);
 
-  // Event listeners
   $("#langSelect").addEventListener("change", async (e) => {
     currentLang = e.target.value;
     await loadLanguage(currentLang);
@@ -67,37 +66,9 @@ function updateLangLabels() {
     if (LANG[key]) el.placeholder = LANG[key];
   });
 
-  // Update judul halaman juga
+  // Update halaman title
   if (LANG["appTitle"]) document.title = LANG["appTitle"];
 }
-
-// === FALLBACK LANG ===
-const fallbackLang = {
-  id: {
-    catalogTitle: "Katalog Barang",
-    purchaseTitle: "Barang Masuk",
-    posTitle: "Kasir",
-    todayTitle: "Transaksi Hari Ini",
-    expenseTitle: "Pengeluaran",
-    report: "Laporan Harian",
-    profit: "Keuntungan",
-    loss: "Kerugian",
-    routine: "Rutin",
-    oneoff: "Mendadak",
-  },
-  en: {
-    catalogTitle: "Catalog",
-    purchaseTitle: "Purchases",
-    posTitle: "Point of Sale",
-    todayTitle: "Transactions",
-    expenseTitle: "Expenses",
-    report: "Daily Report",
-    profit: "Profit",
-    loss: "Loss",
-    routine: "Routine",
-    oneoff: "One-off",
-  },
-};
 
 // === ITEM MANAGEMENT ===
 function addOrUpdateItem(e) {
@@ -107,7 +78,7 @@ function addOrUpdateItem(e) {
   const cost = parseFloat($("#itemCost").value);
   const unit = $("#itemUnit").value;
 
-  if (!name || price <= 0 || cost <= 0) return alert("Invalid item data.");
+  if (!name || price <= 0 || cost <= 0) return alert(LANG.invalidItem || "Invalid item data.");
 
   const existing = data.items.find((i) => i.name.toLowerCase() === name.toLowerCase());
   if (existing) {
@@ -127,22 +98,25 @@ function renderItems() {
   const list = $("#catalogList");
   list.innerHTML =
     data.items.length === 0
-      ? "<small>No items yet.</small>"
+      ? `<small>${LANG.noItem}</small>`
       : data.items
           .map(
             (i) => `
       <div class="row">
         <div>${i.name} (${i.unit})</div>
-        <small>Sell: ${fmt(i.price)} | Cost: ${fmt(i.cost)}</small>
+        <small>${LANG.itemPrice}: ${fmt(i.price)} | ${LANG.itemCost}: ${fmt(i.cost)}</small>
       </div>`
           )
           .join("");
 
-  const selects = [$("#purchaseItem"), $("#selectItem")];
+  // Update dropdowns
+  const selects = [$("#purchaseItem"), $("#selectItem"), $("#itemUnit")];
   selects.forEach((sel) => {
-    sel.innerHTML = data.items
-      .map((i) => `<option value="${i.id}">${i.name}</option>`)
-      .join("");
+    if (sel.id !== "itemUnit") {
+      sel.innerHTML = data.items
+        .map((i) => `<option value="${i.id}">${i.name}</option>`)
+        .join("");
+    }
   });
 }
 
@@ -152,7 +126,7 @@ function addPurchase() {
   const qty = parseFloat($("#purchaseQty").value);
   const cost = parseFloat($("#purchaseCost").value);
   const item = data.items.find((i) => i.id === itemId);
-  if (!item || qty <= 0 || cost <= 0) return alert("Invalid purchase data.");
+  if (!item || qty <= 0 || cost <= 0) return alert(LANG.invalidPurchase || "Invalid purchase data.");
 
   data.purchases.push({
     id: Date.now(),
@@ -172,9 +146,11 @@ function addPurchase() {
 function renderPurchases() {
   $("#purchaseList").innerHTML =
     data.purchases.length === 0
-      ? "<small>No purchases yet.</small>"
+      ? `<small>${LANG.noPurchases}</small>`
       : data.purchases
-          .map((p) => `<div class="row"><div>${p.name} (${p.qty})</div><small>${fmt(p.total)}</small></div>`)
+          .map(
+            (p) => `<div class="row"><div>${p.name} (${p.qty})</div><small>${fmt(p.total)}</small></div>`
+          )
           .join("");
 }
 
@@ -183,7 +159,7 @@ function addToCart() {
   const id = parseInt($("#selectItem").value);
   const qty = parseFloat($("#qty").value);
   const item = data.items.find((i) => i.id === id);
-  if (!item || qty <= 0) return alert("Invalid item or quantity.");
+  if (!item || qty <= 0) return alert(LANG.invalidCart || "Invalid item or quantity.");
 
   const existing = cart.find((c) => c.id === id);
   if (existing) existing.qty += qty;
@@ -196,7 +172,7 @@ function renderCart() {
   const wrap = $("#cart");
   wrap.innerHTML =
     cart.length === 0
-      ? "<small>Cart empty.</small>"
+      ? `<small>${LANG.cartEmpty || "Cart empty."}</small>`
       : cart
           .map(
             (c, idx) => `
@@ -216,7 +192,7 @@ function removeCart(i) {
 
 // === SALES ===
 function completeSale() {
-  if (cart.length === 0) return alert("Cart is empty.");
+  if (cart.length === 0) return alert(LANG.cartEmpty || "Cart is empty.");
   const customer = $("#customerName").value.trim() || "-";
   const total = cart.reduce((a, b) => a + b.price * b.qty, 0);
 
@@ -233,13 +209,12 @@ function completeSale() {
   saveData();
   renderSales();
   renderCart();
-  printReceipt(sale);
 }
 
 function renderSales() {
   $("#transactionsList").innerHTML =
     data.sales.length === 0
-      ? "<small>No transactions.</small>"
+      ? `<small>${LANG.noTransactions}</small>`
       : data.sales
           .slice()
           .reverse()
@@ -261,17 +236,17 @@ function printReceipt(idOrSale) {
 
   const div = document.createElement("div");
   div.id = "printableReceipt";
+  div.style.position = "absolute";
+  div.style.left = "-9999px";
   div.innerHTML = `
     <div style="font-family:monospace;text-align:center;">
-      <h3>STRUK PENJUALAN</h3>
+      <h3>${LANG.printReceipt || "STRUK PENJUALAN"}</h3>
       <p>${new Date(sale.date).toLocaleString()}</p>
       <hr/>
-      ${sale.items
-        .map((i) => `<div>${i.name} (${i.qty}x${fmt(i.price)}) = ${fmt(i.price * i.qty)}</div>`)
-        .join("")}
+      ${sale.items.map((i) => `<div>${i.name} (${i.qty} x ${fmt(i.price)}) = ${fmt(i.price * i.qty)}</div>`).join("")}
       <hr/>
-      <strong>Total: ${fmt(sale.total)}</strong>
-      <p>Terima kasih, ${sale.customer}</p>
+      <strong>${LANG.total || "Total"}: ${fmt(sale.total)}</strong>
+      <p>${LANG.customerName || "Customer"}: ${sale.customer}</p>
     </div>`;
   document.body.appendChild(div);
   window.print();
@@ -279,18 +254,18 @@ function printReceipt(idOrSale) {
 }
 
 function printLastReceipt() {
-  if (!lastSale) return alert("No recent sale.");
+  if (!lastSale) return alert(LANG.noRecentSale || "No recent sale.");
   printReceipt(lastSale);
 }
 
 function saveReceiptPDF() {
-  if (!lastSale) return alert("No recent sale.");
+  if (!lastSale) return alert(LANG.noRecentSale || "No recent sale.");
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
   let y = 20;
 
   doc.setFont("courier", "normal");
-  doc.text("STRUK PENJUALAN", 70, y);
+  doc.text(LANG.printReceipt || "STRUK PENJUALAN", 70, y);
   y += 10;
   doc.text(new Date(lastSale.date).toLocaleString(), 20, (y += 10));
   doc.line(20, (y += 5), 190, y);
@@ -302,8 +277,8 @@ function saveReceiptPDF() {
     y += 10;
   });
   doc.line(20, (y += 5), 190, y);
-  doc.text(`Total: ${fmt(lastSale.total)}`, 20, (y += 15));
-  doc.text(`Customer: ${lastSale.customer}`, 20, (y += 15));
+  doc.text(`${LANG.total || "Total"}: ${fmt(lastSale.total)}`, 20, (y += 15));
+  doc.text(`${LANG.customerName || "Customer"}: ${lastSale.customer}`, 20, (y += 15));
   doc.save("Receipt.pdf");
 }
 
@@ -312,7 +287,7 @@ function addExpense() {
   const desc = $("#expenseDesc").value.trim();
   const amount = parseFloat($("#expenseAmount").value);
   const type = $("#expenseType").value;
-  if (!desc || amount <= 0) return alert("Invalid expense.");
+  if (!desc || amount <= 0) return alert(LANG.invalidExpense || "Invalid expense.");
 
   data.expenses.push({
     id: Date.now(),
@@ -329,14 +304,10 @@ function addExpense() {
 function renderExpenses() {
   $("#expenseList").innerHTML =
     data.expenses.length === 0
-      ? "<small>No expenses yet.</small>"
+      ? `<small>${LANG.noExpenses}</small>`
       : data.expenses
           .map(
-            (e) => `
-      <div class="row">
-        <div>${e.desc} (${LANG[e.type] || e.type})</div>
-        <small>${fmt(e.amount)}</small>
-      </div>`
+            (e) => `<div class="row"><div>${e.desc} (${LANG[e.type] || e.type})</div><small>${fmt(e.amount)}</small></div>`
           )
           .join("");
 }
@@ -356,9 +327,9 @@ function downloadReportPDF() {
   doc.text(`${LANG.report || "Report"}`, 230, y);
   y += 30;
 
-  doc.text(`Total Sales: ${fmt(totalSales)}`, 40, y);
-  doc.text(`Cost of Goods: ${fmt(totalCost)}`, 40, (y += 20));
-  doc.text(`Expenses: ${fmt(totalExpenses)}`, 40, (y += 20));
+  doc.text(`${LANG.total}: ${fmt(totalSales)}`, 40, y);
+  doc.text(`${LANG.loss}: ${fmt(totalCost)}`, 40, (y += 20));
+  doc.text(`${LANG.expense}: ${fmt(totalExpenses)}`, 40, (y += 20));
   doc.text(`${profit >= 0 ? LANG.profit : LANG.loss}: ${fmt(profit)}`, 40, (y += 30));
 
   doc.line(40, (y += 10), 500, y);
@@ -386,7 +357,7 @@ function saveData() {
 }
 
 function clearData() {
-  if (confirm("Delete all data?")) {
+  if (confirm(LANG.clearDataConfirm || "Delete all data?")) {
     localStorage.removeItem("cashierDataV2");
     location.reload();
   }
