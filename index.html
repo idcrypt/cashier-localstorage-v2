@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Cashier App — LocalStorage v2</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- jsPDF and autotable CDN (fallback: put copies in /lib/) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1 id="appTitle">Cashier</h1>
+      <div class="controls">
+        <select id="langSelect">
+          <option value="id">Bahasa</option>
+          <option value="en">English</option>
+        </select>
+
+        <label for="reportFrom" class="sr-only">From</label>
+        <input type="date" id="reportFrom" title="Report from" />
+
+        <label for="reportTo" class="sr-only">To</label>
+        <input type="date" id="reportTo" title="Report to" />
+
+        <button id="downloadPdfBtn">PDF Report</button>
+        <button id="clearBtn">Clear Data</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="panel left">
+        <h2 id="catalogTitle">Catalog</h2>
+
+        <form id="itemForm" class="card-form">
+          <input id="itemName" placeholder="Item name" required />
+          <input id="itemPrice" type="number" step="0.01" placeholder="Price (selling)" required />
+          <input id="itemCost" type="number" step="0.01" placeholder="Cost (purchase)" required />
+          <select id="itemUnit">
+            <option value="pcs">pcs</option>
+            <option value="kg">kg</option>
+            <option value="unit">unit</option>
+          </select>
+          <button type="submit">Add / Update</button>
+        </form>
+
+        <div id="catalogList" class="list" aria-live="polite"></div>
+
+        <hr/>
+
+        <h3>Purchases / Barang Masuk</h3>
+        <form id="purchaseForm" class="card-form">
+          <select id="purchaseItem"></select>
+          <input id="purchaseQty" type="number" value="1" min="1" />
+          <input id="purchaseCost" type="number" step="0.01" placeholder="Unit cost (modal)" required />
+          <button id="addPurchaseBtn" type="button">Add Purchase</button>
+        </form>
+
+        <div id="purchaseList" class="list"></div>
+      </section>
+
+      <section class="panel right">
+        <h2 id="posTitle">Point of Sale</h2>
+        <div id="posArea">
+          <select id="selectItem" aria-label="Select product"></select>
+          <input id="qty" type="number" value="1" min="1" />
+          <button id="addToCartBtn">Add to Cart</button>
+
+          <div id="cart" class="cart" aria-live="polite"></div>
+
+          <div class="pos-actions">
+            <input id="customerName" placeholder="Customer (optional)" />
+            <button id="completeSaleBtn">Complete Sale</button>
+            <button id="printLastReceiptBtn">Print Last Receipt</button>
+            <button id="pdfReceiptBtn">Save Receipt PDF</button>
+          </div>
+        </div>
+
+        <h3 id="todayTitle">Transactions</h3>
+        <div id="transactionsList" class="list"></div>
+
+        <hr/>
+
+        <h3>Expenses / Pengeluaran</h3>
+        <form id="expenseForm" class="card-form">
+          <input id="expenseDesc" placeholder="Description" required />
+          <input id="expenseAmount" type="number" step="0.01" placeholder="Amount" required />
+          <select id="expenseType">
+            <option value="routine">Routine (Rutin)</option>
+            <option value="oneoff">One-off (Mendadak)</option>
+          </select>
+          <button id="addExpenseBtn" type="button">Add Expense</button>
+        </form>
+
+        <div id="expenseList" class="list"></div>
+      </section>
+    </main>
+
+    <footer>
+      <small id="footerNote">LocalStorage Cashier — Dark Neon</small>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
